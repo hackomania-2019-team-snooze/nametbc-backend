@@ -16,7 +16,7 @@ firebase.initializeApp({
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
-var database = firebase.firestore().collection("video");
+var database = firebase.firestore();
 
 //Initialising google cloud storage
 const { Storage } = require("@google-cloud/storage");
@@ -67,3 +67,53 @@ function parseAudioData(data) {
   let url = "http://52.163.240.180/client/dynamic/recognize";
   return request.put(url, { body: data });
 }
+var videoarr = [];
+
+app.get("/dailyvideos", function(req, res) {
+  videoarr = [];
+  var collection = database.collection("video");
+  collection.get().then(snapshot => {
+    snapshot.forEach(data => {
+      videoarr.push({ name: data.id, url: data.data().videourl });
+      // console.log(
+      //   "current array :" + util.inspect(videoarr, false, null, true)
+      // );
+    });
+    res.send(videoarr);
+  });
+  
+});
+
+
+app.get("/videofeed", function(req, res) {
+  videoarr = [];
+  var collection = database.collection("videoaudio");
+  collection.get().then(snapshot => {
+    snapshot.forEach(data => {
+      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+      // console.log(
+      //   "current array :" + util.inspect(videoarr, false, null, true)
+      // );
+    });
+    res.send(videoarr);
+  });
+});
+ 
+
+app.get("/history/:id", function(req, res) {
+  videoarr = [];
+  var requestedUser = req.params.id;
+  var collection = database.collection("videoaudio");
+  collection.get().then(snapshot => {
+    snapshot.forEach(data => { if(requestedUser === data.data().user) {
+      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+      }
+      // console.log(
+      //   "current array :" + util.inspect(videoarr, false, null, true)
+      // );
+    });
+    res.send(videoarr);
+  });
+});
