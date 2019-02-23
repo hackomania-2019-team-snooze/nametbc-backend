@@ -18,6 +18,7 @@
   "homepage": "https://github.com/hackomania-2019-team-snooze/nametbc-backend#readme",
   "dependencies": {
     "express": "^4.16.4",
-    "firebase-admin": "^7.0.0"
+    "firebase-admin": "^7.0.0",
+    "nodemon": "^1.18.10"
   }
 }
