@@ -7,8 +7,10 @@ const serviceAccount = require("./serviceAccountKey.json");
 //Initialising firebase
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
-    databaseURL: "https://nametbc-7539a.firebase.io.com"
+    databaseURL: "https://nametbc-7539a.firebaseio.com"
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
+var database = firebase.database();
+console.log(database.ref());
