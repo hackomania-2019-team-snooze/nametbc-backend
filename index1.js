@@ -30,25 +30,15 @@ admin.initializeApp({
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
-var database = admin.firestore().collection("video");
+var database = admin.firestore();
 
-var picpath = "C:\\Users\\user\\Desktop\\Useless pics\\mypic.jpg";
 
-var file = bucket.file("/videos/uploadedfile");
-
-fs.createReadStream(picpath)
-  .pipe(file.createWriteStream())
-  .on("error", function(err) {})
-  .on("finish", function() {
-    // The file upload is complete.
-    console.log("file upload is complete");
-  });
-
-/*
 var videoarr = [];
 
-app.post("/daily", function(req, res) {
-  database.get().then(snapshot => {
+app.get("/dailyvideos", function(req, res) {
+  videoarr = [];
+  var collection = database.collection("video");
+  collection.get().then(snapshot => {
     snapshot.forEach(data => {
       videoarr.push({ name: data.id, url: data.data().videourl });
       // console.log(
@@ -57,17 +47,39 @@ app.post("/daily", function(req, res) {
     });
     res.send(videoarr);
   });
-  // var cityRef = database.doc("sampleobj");
-  // var getDoc = cityRef
-  //   .get()
-  //   .then(doc => {
-  //     if (!doc.exists) {
-  //       console.log("No such document!");
-  //     } else {
-  //       console.log(doc.data());
-  //     }
-  //   })
-  //   .catch(err => {
-  //     console.log("Error getting document", err);
-  //   });
-});*/
+  
+});
+
+
+app.get("/videofeed", function(req, res) {
+  videoarr = [];
+  var collection = database.collection("videoaudio");
+  collection.get().then(snapshot => {
+    snapshot.forEach(data => {
+      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+      // console.log(
+      //   "current array :" + util.inspect(videoarr, false, null, true)
+      // );
+    });
+    res.send(videoarr);
+  });
+});
+ 
+
+app.get("/history/:id", function(req, res) {
+  videoarr = [];
+  var requestedUser = req.params.id;
+  var collection = database.collection("videoaudio");
+  collection.get().then(snapshot => {
+    snapshot.forEach(data => { if(requestedUser === data.data().user) {
+      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+      }
+      // console.log(
+      //   "current array :" + util.inspect(videoarr, false, null, true)
+      // );
+    });
+    res.send(videoarr);
+  });
+});
