@@ -2,24 +2,36 @@
 const express = require("express");
 const app = express();
 const port = 8080;
-const firebase = require("firebase-admin");
+const admin = require("firebase-admin");
+const firebase = require("firebase");
+
 const serviceAccount = require("./serviceAccountKey.json");
 const util = require("util");
+const { Storage } = require("@google-cloud/storage");
+
+// Your Google Cloud Platform project ID
+const projectId = "798213986507";
+
+// Creates a client
+const storage = new Storage({
+  projectId: projectId,
+  keyFilename: "My First Project-047d8152a5fc.json"
+});
+
+// The name for the new bucket
+const bucketName = "nametbc";
+const bucket = storage.bucket(bucketName);
 
 //Initialising firebase
-firebase.initializeApp({
-  credential: firebase.credential.cert(serviceAccount),
-  storageBucket: "nametbc-7539a.appspot.com"
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: "gs://nametbc-7539a.appspot.com"
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
-var database = firebase.firestore().collection("video");
-var storageref = firebase.storage().ref;
-console.log(storageref);
-var childref = storageref.child("videos");
-console.log(childref);
-var vid0ref = childref.child("vid000.mp4");
-console.log(vid0ref);
+var database = admin.firestore().collection("video");
+
+var vidfolder = bucket.file("video/vid001");
 
 /*
 var videoarr = [];

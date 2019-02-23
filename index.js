@@ -25,8 +25,8 @@ console.log(database.ref());
 
 //event emitter, look out for 'data' to retrieve response
 function parseAudioData(data) {
-    let url = "http://52.163.240.180/client/dynamic/recognize";
-    return request.put(url, { body: data });
+  let url = "http://52.163.240.180/client/dynamic/recognize";
+  return request.put(url, { body: data });
 }
 
 var database = firebase.firestore().collection("video");
