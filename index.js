@@ -66,6 +66,13 @@ function uploadFromMemory(buf, file, callback) {
         });
 }
 
+function transcribeAudio(data, callback) {
+    let url = "http://52.163.240.180/client/dynamic/recognize";
+    request.put(url, {body: data}, (err, response, body) => {
+        callback(body);
+    });
+}
+
 app.post("/new_video", (req, res) => {
 let audio = req.body.audiofile;
     fs.writeFileSync(audio, "audio.wav");
@@ -77,10 +84,11 @@ let audio = req.body.audiofile;
     let videoUrl = "https://storage.googleapis.com/submissions/dubbedVideo/";
 
     //upload audio to 3rd party API
-    request.put('http://52.163.240.180/client/dynamic/recognize', { body: audio }, (err, response, body) => {
+    transcribeAudio(audio, (body) => {
         let transcript = JSON.parse(body).hypotheses[0].utterance;
         let transcriptFileName = "machineText" + userId + curTime.toString() + ".txt";
         let transcriptFile = bucket.file("submissions/subtitles/" + transcriptFileName);
+        transcriptionUrl += transcriptFileName;
         uploadFromMemory(transcript, transcriptFile, () => {
             //download the file, then save the audio on top of it and upload
             videoFile.download({
@@ -92,7 +100,20 @@ let audio = req.body.audiofile;
                 let output = mergeVideoAndAudio();
                 let recordingFileName = "recording" + userId + curTime.toString() + ".mp4";
                 let recordingFile = bucket.file("submissions/dubbedVideo/" + recordingFileName)
-                uploadFromMemory(output, recordingFile, () => {});
+                videoUrl += recordingFileName;
+                let docRef = database.collection("videoaudio").doc(recordingFileName);
+                docRef.set({
+                    audiourl: "",
+                    downvoteArr: [],
+                    upvoteArr: [],
+                    user: userId,
+                    machineTextUrl: transcriptionUrl,
+                    videoId: videoId,
+                    videoUrl: videoUrl,
+                    videoTextUrl: ""
+                }).then( () => {
+                    uploadFromMemory(output, recordingFile, () => {});
+                });
             });
         });
     });
