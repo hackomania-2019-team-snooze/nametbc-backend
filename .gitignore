@@ -2,3 +2,7 @@ node_modules/
 serviceAccountKey.json
 audio.mp3
 package-lock.json
+test.js
+video.mp4
+output.mp4
+audio.wav

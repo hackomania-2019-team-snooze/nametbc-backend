@@ -7,6 +7,7 @@ const serviceAccount = require("./serviceAccountKey.json");
 const fs = require("fs");
 const request = require("request");
 const { Readable } = require("stream");
+var ffmpeg = require('fluent-ffmpeg');
 
 //Initialising firebase
 firebase.initializeApp({
@@ -26,10 +27,32 @@ const storage = new Storage({
 });
 // The name for the new bucket
 const bucket = storage.bucket("nametbc");
-var file = bucket.file("videos/audio.mp3");
+var file = bucket.file("submissions/audio/audio.mp3");
+
+app.post('new_video', (req, res) => {
+
+})
+
+//function to replace media file with given audio track
+function mergeVideoAndAudio(video, audio) {
+  fs.writeFileSync(video, "video.mp4");
+  fs.writeFileSync(audio, "audio.wav");
+  command.input("video.mp4")
+  .input("audio.wav")
+  .outputOptions([
+      "-map 0:v",
+      "-map 1:a",
+      "-c:v copy",
+      "-c:a aac",
+      "-y"
+  ])
+  .output("output.mp4")
+  .run();
+  return fs.readFileSync("output.mp4");
+}
 
 //function to upload file from buffer to google cloud
-function uploadFromMemory(buf) {
+function uploadFromMemory(buf, file) {
   var stream = new Readable();
   stream.push(buf);
   stream.push(null);
