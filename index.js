@@ -7,113 +7,139 @@ const serviceAccount = require("./serviceAccountKey.json");
 const fs = require("fs");
 const request = require("request");
 const { Readable } = require("stream");
-var ffmpeg = require('fluent-ffmpeg');
+const ffmpeg = require('fluent-ffmpeg');
+const bodyParser = require("body-parser");
 
 //Initialising firebase
 firebase.initializeApp({
-  credential: firebase.credential.cert(serviceAccount),
-  storageBucket: "nametbc-7539a.appspot.com"
+    credential: firebase.credential.cert(serviceAccount),
+    storageBucket: "nametbc-7539a.appspot.com"
 });
+
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
 var database = firebase.firestore();
+app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
 //Initialising google cloud storage
 const { Storage } = require("@google-cloud/storage");
 const projectId = "798213986507";
 const storage = new Storage({
-  projectId: projectId,
-  keyFilename: "My First Project-047d8152a5fc.json"
+    projectId: projectId,
+    keyFilename: "My First Project-047d8152a5fc.json"
 });
 // The name for the new bucket
 const bucket = storage.bucket("nametbc");
 var file = bucket.file("submissions/audio/audio.mp3");
 
 //function to replace media file with given audio track
-function mergeVideoAndAudio(video, audio) {
-  fs.writeFileSync(video, "video.mp4");
-  fs.writeFileSync(audio, "audio.wav");
-  command.input("video.mp4")
-  .input("audio.wav")
-  .outputOptions([
-      "-map 0:v",
-      "-map 1:a",
-      "-c:v copy",
-      "-c:a aac",
-      "-y"
-  ])
-  .output("output.mp4")
-  .run();
-  return fs.readFileSync("output.mp4");
+//assumed video.mp4 and audio.wav are set already
+function mergeVideoAndAudio() {
+    command.input("video.mp4")
+    .input("audio.wav")
+    .outputOptions([
+        "-map 0:v",
+        "-map 1:a",
+        "-c:v copy",
+        "-c:a aac",
+        "-y"
+    ])
+    .output("output.mp4")
+    .run();
+    return fs.readFileSync("output.mp4");
 }
 
 //function to upload file from buffer to google cloud
-function uploadFromMemory(buf, file) {
-  var stream = new Readable();
-  stream.push(buf);
-  stream.push(null);
-  stream.pipe(file.createWriteStream())
-    .on('error', (err) => {
-      console.log(err);
-    })
-    .on('finish', () => {
-      console.log('Uploaded!');
-    });
+function uploadFromMemory(buf, file, callback) {
+    var stream = new Readable();
+    stream.push(buf);
+    stream.push(null);
+    stream.pipe(file.createWriteStream())
+        .on('error', (err) => {
+            console.log(err);
+        })
+        .on('finish', () => {
+            console.log('Uploaded!');
+            return callback();
+        });
 }
 
-//uploads audio data to API audio transcriber.
-//event emitter, look out for 'data' to retrieve response
-function parseAudioData(data) {
-  let url = "http://52.163.240.180/client/dynamic/recognize";
-  return request.put(url, { body: data });
-}
-var videoarr = [];
+app.post("/new_video", (req, res) => {
+let audio = req.body.audiofile;
+    fs.writeFileSync(audio, "audio.wav");
+    let userId = req.body.userId;
+    let videoId = req.body.videoId;
+    let videoFile = bucket.file("videos/" + videoId + ".mp4");
+    let curTime = new Date();
+    let transcriptionUrl = "https://storage.googleapis.com/submissions/subtitles/";
+    let videoUrl = "https://storage.googleapis.com/submissions/dubbedVideo/";
 
-app.get("/dailyvideos", function(req, res) {
-  videoarr = [];
-  var collection = database.collection("video");
-  collection.get().then(snapshot => {
-    snapshot.forEach(data => {
-      videoarr.push({ name: data.id, url: data.data().videourl });
-      // console.log(
-      //   "current array :" + util.inspect(videoarr, false, null, true)
-      // );
+    //upload audio to 3rd party API
+    request.put('http://52.163.240.180/client/dynamic/recognize', { body: audio }, (err, response, body) => {
+        let transcript = JSON.parse(body).hypotheses[0].utterance;
+        let transcriptFileName = "machineText" + userId + curTime.toString() + ".txt";
+        let transcriptFile = bucket.file("submissions/subtitles/" + transcriptFileName);
+        uploadFromMemory(transcript, transcriptFile, () => {
+            //download the file, then save the audio on top of it and upload
+            videoFile.download({
+                destination: "video.mp4"
+            }, (err) => {
+                console.log("Error downloading video file: " + videoId);
+                console.log(err);
+            }).then(() => {
+                let output = mergeVideoAndAudio();
+                let recordingFileName = "recording" + userId + curTime.toString() + ".mp4";
+                let recordingFile = bucket.file("submissions/dubbedVideo/" + recordingFileName)
+                uploadFromMemory(output, recordingFile, () => {});
+            });
+        });
     });
-    res.send(videoarr);
-  });
-  
 });
 
+app.post("/dailyvideos", function(req, res) {
+    let videoarr = [];
+    var collection = database.collection("video");
+    collection.get().then(snapshot => {
+        snapshot.forEach(data => {
+        videoarr.push({ name: data.id, url: data.data().videourl });
+        // console.log(
+        //   "current array :" + util.inspect(videoarr, false, null, true)
+        // );
+        });
+        res.send(videoarr);
+    });
+});
 
 app.get("/videofeed", function(req, res) {
-  videoarr = [];
-  var collection = database.collection("videoaudio");
-  collection.get().then(snapshot => {
-    snapshot.forEach(data => {
-      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
-        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
-      // console.log(
-      //   "current array :" + util.inspect(videoarr, false, null, true)
-      // );
+    let videoarr = [];
+    var collection = database.collection("videoaudio");
+    collection.get().then(snapshot => {
+        snapshot.forEach(data => {
+            videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+            dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+            // console.log(
+            //   "current array :" + util.inspect(videoarr, false, null, true)
+            // );
+        });
+        res.send(videoarr);
     });
-    res.send(videoarr);
-  });
 });
  
-
 app.get("/history/:id", function(req, res) {
-  videoarr = [];
-  var requestedUser = req.params.id;
-  var collection = database.collection("videoaudio");
-  collection.get().then(snapshot => {
-    snapshot.forEach(data => { if(requestedUser === data.data().user) {
-      videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
-        dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
-      }
-      // console.log(
-      //   "current array :" + util.inspect(videoarr, false, null, true)
-      // );
+    let videoarr = [];
+    var requestedUser = req.params.id;
+    var collection = database.collection("videoaudio");
+    collection.get().then(snapshot => {
+        snapshot.forEach(data => { if(requestedUser === data.data().user) {
+            videoarr.push({ name: data.data().user, likes: data.data().upvotearr, 
+            dislikes:data.data().downvotearr, texturl:data.data().usertexturl , url: data.data().videourl });
+        }
+        // console.log(
+        //   "current array :" + util.inspect(videoarr, false, null, true)
+        // );
+        });
+        res.send(videoarr);
     });
-    res.send(videoarr);
-  });
 });
