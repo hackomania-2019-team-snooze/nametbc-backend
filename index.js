@@ -73,8 +73,9 @@ function transcribeAudio(data, callback) {
     });
 }
 
+//handles new video post request
 app.post("/new_video", (req, res) => {
-let audio = req.body.audiofile;
+    let audio = req.body.audiofile;
     fs.writeFileSync(audio, "audio.wav");
     let userId = req.body.userId;
     let videoId = req.body.videoId;
@@ -112,10 +113,33 @@ let audio = req.body.audiofile;
                     videoUrl: videoUrl,
                     videoTextUrl: ""
                 }).then( () => {
-                    uploadFromMemory(output, recordingFile, () => {});
+                    uploadFromMemory(output, recordingFile, () => {
+                        res.send({
+                            transcript: transcript, 
+                            transcriptName: transcriptFileName,
+                            videoRecordingFileName: recordingFileName
+                        });
+                    });
                 });
             });
         });
+    });
+});
+
+//handles updated subtitles post request
+app.post("/subtitles", (req, res) => {
+    let userId = req.body.userId;
+    let text = req.body.test;
+    let transcriptionFileName = req.body.transcriptionName + '0';
+    let videoRecordingFileName = req.body.videoRecordingFileName;
+    let transcriptionUrl = "https://storage.googleapis.com/submissions/subtitles/" + fileName;
+    let transcriptionFile = bucket.file("submissions/subtitles" + fileName);
+    uploadFromMemory(text, transcriptionFile, () => {
+        let docRef = database.collection("videoaudio").doc(videoRecordingFileName).set({
+            videoTextUrl: transcriptionUrl
+        }).then(() => {
+            res.send({Success: true});
+        })
     });
 });
 
