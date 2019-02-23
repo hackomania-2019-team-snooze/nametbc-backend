@@ -6,9 +6,18 @@ const serviceAccount = require("./serviceAccountKey.json");
 
 //Initialising firebase
 firebase.initializeApp({
-    credential: firebase.credential.cert(serviceAccount),
-    databaseURL: "https://nametbc-7539a.firebase.io.com"
+  credential: firebase.credential.cert(serviceAccount),
+  databaseURL: "https://nametbc-7539a.firebaseio.com"
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
+var database = firebase.database();
 
+var obj = {
+  a: 6,
+  b: 5
+};
+
+app.get("/random.text", function(req, res) {
+  res.send("random.text");
+});
