@@ -29,10 +29,6 @@ const storage = new Storage({
 const bucket = storage.bucket("nametbc");
 var file = bucket.file("submissions/audio/audio.mp3");
 
-app.post('new_video', (req, res) => {
-
-})
-
 //function to replace media file with given audio track
 function mergeVideoAndAudio(video, audio) {
   fs.writeFileSync(video, "video.mp4");
