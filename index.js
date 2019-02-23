@@ -132,8 +132,8 @@ app.post("/subtitles", (req, res) => {
     let text = req.body.test;
     let transcriptionFileName = req.body.transcriptionName + '0';
     let videoRecordingFileName = req.body.videoRecordingFileName;
-    let transcriptionUrl = "https://storage.googleapis.com/submissions/subtitles/" + fileName;
-    let transcriptionFile = bucket.file("submissions/subtitles" + fileName);
+    let transcriptionUrl = "https://storage.googleapis.com/submissions/subtitles/" + transcriptionFileName;
+    let transcriptionFile = bucket.file("submissions/subtitles" + transcriptionFileName);
     uploadFromMemory(text, transcriptionFile, () => {
         let docRef = database.collection("videoaudio").doc(videoRecordingFileName).set({
             videoTextUrl: transcriptionUrl
