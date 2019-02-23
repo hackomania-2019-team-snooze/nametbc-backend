@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const port = 8080;
 const admin = require("firebase-admin");
-const firebase = require("firebase");
+const fs = require("fs");
 
 const serviceAccount = require("./serviceAccountKey.json");
 const util = require("util");
@@ -29,9 +29,20 @@ admin.initializeApp({
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
+
 var database = admin.firestore().collection("video");
 
-var vidfolder = bucket.file("video/vid001");
+var picpath = "C:\\Users\\user\\Desktop\\Useless pics\\mypic.jpg";
+
+var file = bucket.file("/videos/uploadedfile");
+
+fs.createReadStream(picpath)
+  .pipe(file.createWriteStream())
+  .on("error", function(err) {})
+  .on("finish", function() {
+    // The file upload is complete.
+    console.log("file upload is complete");
+  });
 
 /*
 var videoarr = [];

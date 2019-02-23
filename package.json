@@ -21,6 +21,7 @@
     "express": "^4.16.4",
     "firebase": "^5.8.4",
     "firebase-admin": "^7.0.0",
+    "fs": "0.0.1-security",
     "nodemon": "^1.18.10"
   }
 }
