@@ -1,0 +1,23 @@
+{
+  "name": "nametbc-backend",
+  "version": "1.0.0",
+  "description": "Backend for our application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hackomania-2019-team-snooze/nametbc-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hackomania-2019-team-snooze/nametbc-backend/issues"
+  },
+  "homepage": "https://github.com/hackomania-2019-team-snooze/nametbc-backend#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "firebase-admin": "^7.0.0"
+  }
+}
