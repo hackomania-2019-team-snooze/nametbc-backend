@@ -21,7 +21,12 @@
     "express": "^4.16.4",
     "firebase": "^5.8.4",
     "firebase-admin": "^7.0.0",
+<<<<<<< HEAD
     "fs": "0.0.1-security",
     "nodemon": "^1.18.10"
+=======
+    "nodemon": "^1.18.10",
+    "stream": "0.0.2"
+>>>>>>> 87434ec9e4559b452f6fe2c1368be375f9bcce52
   }
 }
