@@ -4,6 +4,8 @@ const app = express();
 const port = 8080;
 const firebase = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
+const fs = require("fs");
+const request = require("request");
 
 //Initialising firebase
 firebase.initializeApp({
@@ -20,6 +22,12 @@ var obj = {
 };
 
 console.log(database.ref());
+
+//event emitter, look out for 'data' to retrieve response
+function parseAudioData(data) {
+    let url = "http://52.163.240.180/client/dynamic/recognize";
+    return request.put(url, { body: data });
+}
 
 var database = firebase.firestore().collection("video");
 database.get().then(snapshot => {
