@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 const express = require("express");
 const app = express();
 const port = 8080;
@@ -9,14 +9,29 @@ const request = require("request");
 
 //Initialising firebase
 firebase.initializeApp({
-    credential: firebase.credential.cert(serviceAccount),
-    storageBucket: "nametbc-7539a.appspot.com"
+  credential: firebase.credential.cert(serviceAccount),
+  storageBucket: "nametbc-7539a.appspot.com"
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
+var database = firebase.firestore().collection("video");
+
+var obj = {
+  a: 6,
+  b: 5
+};
+
+console.log(database.ref());
 
 //event emitter, look out for 'data' to retrieve response
 function parseAudioData(data) {
     let url = "http://52.163.240.180/client/dynamic/recognize";
     return request.put(url, { body: data });
 }
+
+var database = firebase.firestore().collection("video");
+database.get().then(snapshot => {
+  snapshot.forEach(data => {
+    console.log(data.data());
+  });
+});
