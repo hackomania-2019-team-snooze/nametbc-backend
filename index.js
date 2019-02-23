@@ -8,10 +8,14 @@ const serviceAccount = require("./serviceAccountKey.json");
 //Initialising firebase
 firebase.initializeApp({
     credential: firebase.credential.cert(serviceAccount),
-    databaseURL: "https://nametbc-7539a.firebaseio.com"
+    storageBucket: "nametbc-7539a.appspot.com"
 });
 //Initialising express
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
-var database = firebase.database();
-console.log(database.ref());
+var database = firebase.firestore().collection("video");
+database.get().then((snapshot) => {
+    snapshot.forEach((data) => {
+        console.log(data.data());
+    });
+});
