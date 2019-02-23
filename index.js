@@ -14,16 +14,22 @@ firebase.initializeApp({
 app.listen(port, () => console.log(`Listening on port ${port}`));
 var database = firebase.firestore().collection("video");
 
-var obj = {
-  a: 6,
-  b: 5
-};
-
-console.log(database.ref());
-
 var database = firebase.firestore().collection("video");
 database.get().then(snapshot => {
   snapshot.forEach(data => {
     console.log(data.data());
   });
+  var cityRef = database.doc("sampleobj");
+  var getDoc = cityRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        console.log("No such document!");
+      } else {
+        console.log(doc.data());
+      }
+    })
+    .catch(err => {
+      console.log("Error getting document", err);
+    });
 });
