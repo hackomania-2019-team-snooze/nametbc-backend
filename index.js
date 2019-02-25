@@ -9,6 +9,8 @@ const request = require("request");
 const { Readable } = require("stream");
 const ffmpeg = require('fluent-ffmpeg');
 const bodyParser = require("body-parser");
+const multer = require("multer");
+const upload = multer({dest: './audio'});
 
 //Initialising firebase
 firebase.initializeApp({
@@ -37,7 +39,7 @@ var file = bucket.file("submissions/audio/audio.mp3");
 //function to replace media file with given audio track
 //assumed video.mp4 and audio.wav are set already
 function mergeVideoAndAudio() {
-    command.input("video.mp4")
+    ffmpeg().input("video.mp4")
     .input("audio.wav")
     .outputOptions([
         "-map 0:v",
@@ -74,9 +76,10 @@ function transcribeAudio(data, callback) {
 }
 
 //handles new video post request
-app.post("/new_video", (req, res) => {
-    let audio = req.body.audiofile;
-    fs.writeFileSync(audio, "audio.wav");
+app.post("/new_video", upload.single("file"), (req, res) => {
+    let audio = fs.readFileSync(req.file.path);
+    fs.unlink(req.file.path);
+    fs.writeFileSync("audio.mp3", audio);
     let userId = req.body.userId;
     let videoId = req.body.videoId;
     let videoFile = bucket.file("videos/" + videoId + ".mp4");
@@ -87,17 +90,14 @@ app.post("/new_video", (req, res) => {
     //upload audio to 3rd party API
     transcribeAudio(audio, (body) => {
         let transcript = JSON.parse(body).hypotheses[0].utterance;
+        console.log(transcript);
         let transcriptFileName = "machineText" + userId + curTime.toString() + ".txt";
         let transcriptFile = bucket.file("submissions/subtitles/" + transcriptFileName);
         transcriptionUrl += transcriptFileName;
         uploadFromMemory(transcript, transcriptFile, () => {
             //download the file, then save the audio on top of it and upload
-            videoFile.download({
-                destination: "video.mp4"
-            }, (err) => {
-                console.log("Error downloading video file: " + videoId);
-                console.log(err);
-            }).then(() => {
+            videoFile.download().then((data) => {
+                fs.writeFileSync("video.mp4", data);
                 let output = mergeVideoAndAudio();
                 let recordingFileName = "recording" + userId + curTime.toString() + ".mp4";
                 let recordingFile = bucket.file("submissions/dubbedVideo/" + recordingFileName)
